@@ -1,19 +1,33 @@
 import java.nio.file.Paths
 import java.util.Properties
-import org.ajoberstar.grgit.Grgit
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.api.Git
+
+import java.io.IOException
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
+    }
+}
 
 plugins {
     `kotlin-dsl`
     idea
-    id("org.ajoberstar.grgit") version "4.1.1"
 }
 
 val defaultEsVersion = readVersion("es-default.version")
 val nebulaVersion = "9.1.1"
 
-val grgit = Grgit.open(mapOf("currentDir" to project.rootDir))
-val gitDescribe = grgit.describe(mapOf("match" to listOf("v*-es*"), "tags" to true))
-    ?: "v0.0.0-es$defaultEsVersion"
+val pluginVersion = try {
+    val git = Git.open(project.rootDir.resolve(".git"))
+    git.describe().setTags(true).setMatch("v*-es*").call()
+} catch (e: IOException) {
+    "v0.0.0-es$defaultEsVersion"
+}
 
 class GitDescribe(val describe: String) {
     private val VERSION_REGEX = "[0-9]+\\.[0-9]+\\.[0-9]+(\\-(alpha|beta|rc)\\-[0-9]+)?"
@@ -49,7 +63,7 @@ class GitDescribe(val describe: String) {
         }
     }
 }
-val describe = GitDescribe(gitDescribe)
+val describe = GitDescribe(pluginVersion)
 
 val generatedResourcesDir = Paths.get(buildDir.path, "generated-resources", "main")
 

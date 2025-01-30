@@ -23,7 +23,7 @@ val defaultEsVersion = readVersion("es-default.version")
 val nebulaVersion = "9.1.1"
 
 val pluginVersion = try {
-    val git = Git.open(project.rootDir.resolve(".git"))
+    val git = Git.open(project.rootDir.getParentFile().resolve(".git"))
     git.describe().setTags(true).setMatch("v*-es*").call()
 } catch (e: IOException) {
     "v0.0.0-es$defaultEsVersion"

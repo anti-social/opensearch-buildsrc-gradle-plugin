@@ -22,7 +22,6 @@ fun Project.configureOpensearchPlugin(
         version = project.version.toString()
         licenseFile = project.file("LICENSE.txt")
         noticeFile = project.file("NOTICE.txt")
-        version = Versions.plugin
     }
 
     setProperty("licenseFile", project.rootProject.file("LICENSE.txt"))

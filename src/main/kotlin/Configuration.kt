@@ -21,11 +21,11 @@ fun Project.extraConfiguration() {
     }
 
     configure<NamedDomainObjectContainer<OpenSearchCluster>> {
-        val integTestCluster by named("integTest") {
+        create("integTest") {
             setTestDistribution(TestDistribution.INTEG_TEST)
         }
 
-        val integTestTask = tasks.getByName<RestIntegTestTask>("integTest") {
+        val integTestTask = tasks.register<RestIntegTestTask>("integTest") {
             dependsOn("bundlePlugin")
         }
 

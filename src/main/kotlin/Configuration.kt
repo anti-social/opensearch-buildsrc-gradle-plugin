@@ -1,3 +1,4 @@
+import org.opensearch.gradle.plugin.PluginPropertiesExtension
 import org.opensearch.gradle.test.RestIntegTestTask
 import org.opensearch.gradle.testclusters.OpenSearchCluster
 import org.opensearch.gradle.testclusters.TestDistribution
@@ -7,8 +8,18 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.kotlin.dsl.*
 
-fun Project.extraConfiguration() {
+fun Project.configureOpensearchPlugin(
+    name: String,
+    description: String,
+    classname: String,
+) {
     configure<org.opensearch.gradle.plugin.PluginPropertiesExtension> {
+        this.name = name
+        this.description = description
+        this.classname = classname
+        version = project.version.toString()
+        licenseFile = project.file("LICENSE.txt")
+        noticeFile = project.file("NOTICE.txt")
         version = Versions.plugin
     }
 

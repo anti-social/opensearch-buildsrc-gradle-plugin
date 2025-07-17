@@ -27,6 +27,8 @@ fun Project.configureOpensearchPlugin(
     setProperty("licenseFile", project.rootProject.file("LICENSE.txt"))
     setProperty("noticeFile", project.rootProject.file("NOTICE.txt"))
 
+    extra["opensearch_version"] = Versions.opensearch
+
     configure<NamedDomainObjectContainer<OpenSearchCluster>> {
         create("integTest") {
             setTestDistribution(TestDistribution.INTEG_TEST)

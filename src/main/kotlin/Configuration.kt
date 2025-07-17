@@ -56,7 +56,7 @@ fun Project.configureOpensearchPlugin(
     tasks.register("deb", com.netflix.gradle.plugins.deb.Deb::class) {
         dependsOn("bundlePlugin")
 
-        packageName = "opensearch-${project.name}-plugin"
+        packageName = "${project.name}-plugin"
         requires("opensearch", Versions.opensearch)
 
         from(zipTree(tasks["bundlePlugin"].outputs.files.singleFile))

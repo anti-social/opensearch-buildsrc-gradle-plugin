@@ -46,7 +46,7 @@ class GitDescribe(val describe: String) {
     } else {
         // When adopting to new Opensearch version
         // create `buildSrc/opensearch.version` file so IDE can fetch correct version of Opensearch
-        readVersion("opensearch.version") ?: opensearch
+        readVersion("../opensearch.version") ?: opensearch
     }
 
     fun pluginVersion() = buildString {

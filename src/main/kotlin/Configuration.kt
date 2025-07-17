@@ -28,11 +28,6 @@ fun Project.configureOpensearchPlugin(
     setProperty("licenseFile", project.rootProject.file("LICENSE.txt"))
     setProperty("noticeFile", project.rootProject.file("NOTICE.txt"))
 
-    configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_15
-        targetCompatibility = JavaVersion.VERSION_15
-    }
-
     configure<NamedDomainObjectContainer<OpenSearchCluster>> {
         create("integTest") {
             setTestDistribution(TestDistribution.INTEG_TEST)

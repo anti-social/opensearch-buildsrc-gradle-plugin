@@ -6,6 +6,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.bundling.Zip
 import org.gradle.kotlin.dsl.*
 
 fun Project.configureOpensearchPlugin(
@@ -38,6 +39,7 @@ fun Project.configureOpensearchPlugin(
             if (numberOfTestClusterNodes != 1) {
                 numberOfNodes = numberOfTestClusterNodes
             }
+            plugin(tasks.named<Zip>("bundlePlugin").get().archiveFile)
         }
 
         val integTestTask = tasks.register<RestIntegTestTask>("integTest") {

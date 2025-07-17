@@ -9,11 +9,22 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.kotlin.dsl.*
 
+enum class PluginCompatibility {
+    EXACT, MINOR, MAJOR;
+
+    fun prefix(): String = when (this) {
+        PluginCompatibility.EXACT -> "="
+        PluginCompatibility.MINOR -> "~"
+        PluginCompatibility.MAJOR -> "^"
+    }
+}
+
 fun Project.configureOpensearchPlugin(
     name: String,
     description: String,
     classname: String,
     numberOfTestClusterNodes: Int = 1,
+    pluginCompatibility: PluginCompatibility = PluginCompatibility.EXACT,
 ) {
     configure<org.opensearch.gradle.plugin.PluginPropertiesExtension> {
         this.name = name
@@ -44,6 +55,37 @@ fun Project.configureOpensearchPlugin(
 
         tasks.named("check") {
             dependsOn(integTestTask)
+        }
+    }
+
+    tasks.named("pluginProperties") {
+        inputs.property("compatibility", pluginCompatibility)
+
+        doLast {
+            if (pluginCompatibility == PluginCompatibility.EXACT) {
+                return@doLast
+            }
+
+            val pluginPropertiesFile = layout.buildDirectory.dir("generated-resources").get()
+                .file("plugin-descriptor.properties")
+            val pluginProperties = pluginPropertiesFile.asFile.readText()
+            val opensearchVersionRegex = "opensearch.version\\s*=\\s*(.*)\\s*".toRegex()
+            val patchedPluginProperties = StringBuilder()
+            var isPatchedVersion = false
+            for (line in pluginProperties.split('\n')) {
+                val versionMatch = opensearchVersionRegex.matchEntire(line)
+                if (versionMatch != null) {
+                    patchedPluginProperties.appendLine(
+                        "dependencies = { opensearch: \"${pluginCompatibility.prefix()}${versionMatch.groupValues[1]}\" }"
+                    )
+                    isPatchedVersion = true
+                } else {
+                    patchedPluginProperties.appendLine(line)
+                }
+            }
+            if (isPatchedVersion) {
+                pluginPropertiesFile.asFile.writeText(patchedPluginProperties.toString())
+            }
         }
     }
 

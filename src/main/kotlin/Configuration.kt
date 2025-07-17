@@ -12,6 +12,7 @@ fun Project.configureOpensearchPlugin(
     name: String,
     description: String,
     classname: String,
+    numberOfTestClusterNodes: Int = 1,
 ) {
     configure<org.opensearch.gradle.plugin.PluginPropertiesExtension> {
         this.name = name
@@ -34,6 +35,9 @@ fun Project.configureOpensearchPlugin(
     configure<NamedDomainObjectContainer<OpenSearchCluster>> {
         create("integTest") {
             setTestDistribution(TestDistribution.INTEG_TEST)
+            if (numberOfTestClusterNodes != 1) {
+                numberOfNodes = numberOfTestClusterNodes
+            }
         }
 
         val integTestTask = tasks.register<RestIntegTestTask>("integTest") {

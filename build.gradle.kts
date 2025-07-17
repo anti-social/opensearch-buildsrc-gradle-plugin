@@ -19,7 +19,7 @@ plugins {
 }
 
 val defaultOpensearchVersion = readVersion("opensearch-default.version")
-val nebulaVersion = "9.1.1"
+val nebulaVersion = "12.0.0"
 
 val fallbackPluginVersion = "v0.0.0-os$defaultOpensearchVersion"
 val pluginVersion = try {

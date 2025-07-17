@@ -1,9 +1,8 @@
-import java.nio.file.Paths
+import java.io.IOException
 import java.util.Properties
+import kotlin.io.path.div
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.api.Git
-
-import java.io.IOException
 
 buildscript {
     repositories {
@@ -19,13 +18,13 @@ plugins {
     idea
 }
 
-val defaultEsVersion = readVersion("es-default.version")
+val defaultOpensearchVersion = readVersion("opensearch-default.version")
 val nebulaVersion = "9.1.1"
 
-val fallbackPluginVersion = "v0.0.0-es$defaultEsVersion"
+val fallbackPluginVersion = "v0.0.0-os$defaultOpensearchVersion"
 val pluginVersion = try {
     val git = Git.open(project.rootDir.getParentFile().resolve(".git"))
-    git.describe().setTags(true).setMatch("v*-es*").call() ?: fallbackPluginVersion
+    git.describe().setTags(true).setMatch("v*-os*").call() ?: fallbackPluginVersion
 } catch (e: IOException) {
     fallbackPluginVersion
 }
@@ -34,20 +33,20 @@ class GitDescribe(val describe: String) {
     private val VERSION_REGEX = "[0-9]+\\.[0-9]+\\.[0-9]+(\\-(alpha|beta|rc)\\-[0-9]+)?"
 
     private val matchedGroups =
-        "v(?<plugin>${VERSION_REGEX})-es(?<es>${VERSION_REGEX})(-(?<abbrev>.*))?".toRegex()
+        "v(?<plugin>${VERSION_REGEX})-os(?<opensearch>${VERSION_REGEX})(-(?<abbrev>.*))?".toRegex()
             .matchEntire(describe)!!
             .groups
 
     val plugin = matchedGroups["plugin"]!!.value
-    val es = matchedGroups["es"]!!.value
+    val opensearch = matchedGroups["opensearch"]!!.value
     val abbrev = matchedGroups["abbrev"]?.value
 
-    fun esVersion() = if (hasProperty("esVersion")) {
-        property("esVersion")
+    fun opensearchVersion() = if (hasProperty("opensearchVersion")) {
+        property("opensearchVersion")
     } else {
-        // When adopting to new Elasticsearch version
-        // create `buildSrc/es.version` file so IDE can fetch correct version of Elasticsearch
-        readVersion("es.version") ?: es
+        // When adopting to new Opensearch version
+        // create `buildSrc/opensearch.version` file so IDE can fetch correct version of Opensearch
+        readVersion("opensearch.version") ?: opensearch
     }
 
     fun pluginVersion() = buildString {
@@ -58,7 +57,7 @@ class GitDescribe(val describe: String) {
     }
 
     fun projectVersion() = buildString {
-        append("$plugin-es${esVersion()}")
+        append("$plugin-os${opensearchVersion()}")
         if (abbrev != null) {
             append("-$abbrev")
         }
@@ -66,7 +65,9 @@ class GitDescribe(val describe: String) {
 }
 val describe = GitDescribe(pluginVersion)
 
-val generatedResourcesDir = Paths.get(buildDir.path, "generated-resources", "main")
+val generatedResourcesDir = layout.buildDirectory.map {
+    it.dir("generated-resources").dir("main")
+}
 
 sourceSets {
     main {
@@ -81,11 +82,15 @@ tasks.create("generateVersionProperties") {
             put("tag", describe.describe)
             put("projectVersion", describe.projectVersion())
             put("pluginVersion", describe.pluginVersion())
-            put("esVersion", describe.esVersion())
+            put("opensearchVersion", describe.opensearchVersion())
         }
-        generatedResourcesDir.resolve("es-plugin-versions.properties").toFile().writer().use {
-            versionProps.store(it, null)
-        }
+        generatedResourcesDir.get()
+            .file("opensearch-plugin-versions.properties")
+            .asFile
+            .writer()
+            .use {
+               versionProps.store(it, null)
+            }
     }
 }
 
@@ -94,9 +99,9 @@ repositories {
     gradlePluginPortal()
 }
 
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
-}
+// kotlinDslPluginOptions {
+//     experimentalWarning.set(false)
+// }
 
 idea {
     module {
@@ -106,8 +111,8 @@ idea {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.30")
-    implementation("org.elasticsearch.gradle:build-tools:${describe.esVersion()}")
+    // implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.30")
+    implementation("org.opensearch.gradle:build-tools:${describe.opensearchVersion()}")
     implementation("com.netflix.nebula:gradle-ospackage-plugin:${nebulaVersion}")
     constraints {
         // Due to end of jCenter repository
@@ -121,9 +126,9 @@ dependencies {
 fun readVersion(fileName: String): String? {
     project.projectDir.toPath().resolve(fileName).toFile().let {
         if (it.exists()) {
-            val esVersion = it.readText().trim()
-            if (!esVersion.startsWith('#')) {
-                return esVersion
+            val opensearchVersion = it.readText().trim()
+            if (!opensearchVersion.startsWith('#')) {
+                return opensearchVersion
             }
             return null
         }

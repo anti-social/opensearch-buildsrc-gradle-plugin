@@ -2,7 +2,7 @@ import java.util.Properties
 
 object Versions {
     private val versionProps = this::class.java
-        .getResourceAsStream("/es-plugin-versions.properties")
+        .getResourceAsStream("/opensearch-plugin-versions.properties")
         .use {
             Properties().apply {
                 load(it)
@@ -10,6 +10,6 @@ object Versions {
         }
 
     val project = versionProps["projectVersion"]!!.toString()
-    val elasticsearch = versionProps["esVersion"]!!.toString()
+    val opensearch = versionProps["opensearchVersion"]!!.toString()
     val plugin = versionProps["pluginVersion"]!!.toString()
 }

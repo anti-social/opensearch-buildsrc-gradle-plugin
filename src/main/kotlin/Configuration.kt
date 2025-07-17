@@ -1,16 +1,14 @@
-import org.elasticsearch.gradle.test.RestIntegTestTask
-import org.elasticsearch.gradle.testclusters.ElasticsearchCluster
-import org.elasticsearch.gradle.testclusters.TestDistribution
+import org.opensearch.gradle.test.RestIntegTestTask
+import org.opensearch.gradle.testclusters.OpenSearchCluster
+import org.opensearch.gradle.testclusters.TestDistribution
 import org.gradle.api.JavaVersion
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.kotlin.dsl.*
 
-import java.nio.file.Paths
-
 fun Project.extraConfiguration() {
-    configure<org.elasticsearch.gradle.plugin.PluginPropertiesExtension> {
+    configure<org.opensearch.gradle.plugin.PluginPropertiesExtension> {
         version = Versions.plugin
     }
 
@@ -22,9 +20,9 @@ fun Project.extraConfiguration() {
         targetCompatibility = JavaVersion.VERSION_15
     }
 
-    configure<NamedDomainObjectContainer<ElasticsearchCluster>> {
+    configure<NamedDomainObjectContainer<OpenSearchCluster>> {
         val integTestCluster by named("integTest") {
-            setTestDistribution(TestDistribution.OSS)
+            setTestDistribution(TestDistribution.INTEG_TEST)
         }
 
         val integTestTask = tasks.getByName<RestIntegTestTask>("integTest") {
@@ -36,23 +34,22 @@ fun Project.extraConfiguration() {
         }
     }
 
-    val distDir = Paths.get(buildDir.path, "distributions")
+    val distDir = layout.buildDirectory.dir("distributions")
 
     tasks.register("deb", com.netflix.gradle.plugins.deb.Deb::class) {
         dependsOn("bundlePlugin")
 
-        packageName = "elasticsearch-${project.name}-plugin"
-        requires("elasticsearch", Versions.elasticsearch)
-            .or("elasticsearch-oss", Versions.elasticsearch)
+        packageName = "opensearch-${project.name}-plugin"
+        requires("opensearch", Versions.opensearch)
 
         from(zipTree(tasks["bundlePlugin"].outputs.files.singleFile))
 
-        val esHome = project.properties["esHome"] ?: "/usr/share/elasticsearch"
+        val esHome = project.properties["esHome"] ?: "/usr/share/opensearch"
         into("$esHome/plugins/${project.name}")
 
         doLast {
             if (properties.containsKey("assembledInfo")) {
-                distDir.resolve("assembled-deb.filename").toFile()
+                distDir.get().file("assembled-deb.filename").asFile
                     .writeText(assembleArchiveName())
             }
         }

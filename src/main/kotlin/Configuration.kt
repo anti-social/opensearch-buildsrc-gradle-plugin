@@ -9,13 +9,13 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.kotlin.dsl.*
 
-enum class PluginCompatibility {
-    EXACT, MINOR, MAJOR;
+enum class OpensearchCompatibility {
+    EXACT, REVISION, MINOR;
 
     fun prefix(): String = when (this) {
-        PluginCompatibility.EXACT -> "="
-        PluginCompatibility.MINOR -> "~"
-        PluginCompatibility.MAJOR -> "^"
+        OpensearchCompatibility.EXACT -> "="
+        OpensearchCompatibility.REVISION -> "~"
+        OpensearchCompatibility.MINOR -> "^"
     }
 }
 
@@ -24,7 +24,7 @@ fun Project.configureOpensearchPlugin(
     description: String,
     classname: String,
     numberOfTestClusterNodes: Int = 1,
-    pluginCompatibility: PluginCompatibility = PluginCompatibility.EXACT,
+    opensearchCompatibility: OpensearchCompatibility = OpensearchCompatibility.EXACT,
 ) {
     configure<org.opensearch.gradle.plugin.PluginPropertiesExtension> {
         this.name = name
@@ -59,10 +59,10 @@ fun Project.configureOpensearchPlugin(
     }
 
     tasks.named("pluginProperties") {
-        inputs.property("compatibility", pluginCompatibility)
+        inputs.property("compatibility", opensearchCompatibility)
 
         doLast {
-            if (pluginCompatibility == PluginCompatibility.EXACT) {
+            if (opensearchCompatibility == OpensearchCompatibility.EXACT) {
                 return@doLast
             }
 
@@ -76,7 +76,7 @@ fun Project.configureOpensearchPlugin(
                 val versionMatch = opensearchVersionRegex.matchEntire(line)
                 if (versionMatch != null) {
                     patchedPluginProperties.appendLine(
-                        "dependencies = { opensearch: \"${pluginCompatibility.prefix()}${versionMatch.groupValues[1]}\" }"
+                        "dependencies = { opensearch: \"${opensearchCompatibility.prefix()}${versionMatch.groupValues[1]}\" }"
                     )
                     isPatchedVersion = true
                 } else {

@@ -1,15 +1,10 @@
 import java.io.IOException
 import java.util.Properties
 import kotlin.io.path.div
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.api.Git
 
 buildscript {
     repositories {
         mavenCentral()
-    }
-    dependencies {
-        classpath("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
     }
 }
 
@@ -18,36 +13,24 @@ plugins {
     idea
 }
 
-val defaultOpensearchVersion = readVersion("opensearch-default.version")
 val nebulaVersion = "12.0.0"
 
-val fallbackPluginVersion = "v0.0.0-os$defaultOpensearchVersion"
-val pluginVersion = try {
-    val git = Git.open(project.rootDir.getParentFile().resolve(".git"))
-    git.describe().setTags(true).setMatch("v*-os*").call() ?: fallbackPluginVersion
-} catch (e: IOException) {
-    fallbackPluginVersion
-}
+val defaultOpensearchVersion = readVersion("../opensearch.version") ?: readVersion("opensearch-default.version")
+val fallbackTagVersion = "v0.0.0-os$defaultOpensearchVersion"
 
-class GitDescribe(val describe: String) {
+class GitDescribe(val tagVersion: String) {
     private val VERSION_REGEX = "[0-9]+\\.[0-9]+\\.[0-9]+(\\-(alpha|beta|rc)\\-[0-9]+)?"
 
     private val matchedGroups =
         "v(?<plugin>${VERSION_REGEX})-os(?<opensearch>${VERSION_REGEX})(-(?<abbrev>.*))?".toRegex()
-            .matchEntire(describe)!!
+            .matchEntire(tagVersion)!!
             .groups
 
     val plugin = matchedGroups["plugin"]!!.value
     val opensearch = matchedGroups["opensearch"]!!.value
     val abbrev = matchedGroups["abbrev"]?.value
 
-    fun opensearchVersion() = if (hasProperty("opensearchVersion")) {
-        property("opensearchVersion")
-    } else {
-        // When adopting to new Opensearch version
-        // create `buildSrc/opensearch.version` file so IDE can fetch correct version of Opensearch
-        readVersion("../opensearch.version") ?: opensearch
-    }
+    fun opensearchVersion() = opensearch
 
     fun pluginVersion() = buildString {
         append(plugin)
@@ -63,7 +46,9 @@ class GitDescribe(val describe: String) {
         }
     }
 }
-val describe = GitDescribe(pluginVersion)
+val describe = GitDescribe(
+    project.findProperty("tagVersion")?.toString() ?: fallbackTagVersion
+)
 
 val generatedResourcesDir = layout.buildDirectory.map {
     it.dir("generated-resources").dir("main")
@@ -79,7 +64,7 @@ tasks.create("generateVersionProperties") {
     outputs.dir(generatedResourcesDir)
     doLast {
         val versionProps = Properties().apply {
-            put("tag", describe.describe)
+            put("tag", describe.tagVersion)
             put("projectVersion", describe.projectVersion())
             put("pluginVersion", describe.pluginVersion())
             put("opensearchVersion", describe.opensearchVersion())

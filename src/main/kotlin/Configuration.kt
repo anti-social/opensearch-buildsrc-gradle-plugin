@@ -30,7 +30,7 @@ fun Project.configureOpensearchPlugin(
         this.name = name
         this.description = description
         this.classname = classname
-        version = project.version.toString()
+        version = Versions.project
         licenseFile = project.file("LICENSE.txt")
         noticeFile = project.file("NOTICE.txt")
     }

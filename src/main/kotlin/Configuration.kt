@@ -23,6 +23,8 @@ fun Project.configureOpensearchPlugin(
     name: String,
     description: String,
     classname: String,
+    extendedPlugins: List<String> = emptyList(),
+    testDistribution: TestDistribution = TestDistribution.INTEG_TEST,
     numberOfTestClusterNodes: Int = 1,
     opensearchCompatibility: OpensearchCompatibility = OpensearchCompatibility.EXACT,
 ) {
@@ -30,6 +32,7 @@ fun Project.configureOpensearchPlugin(
         this.name = name
         this.description = description
         this.classname = classname
+        this.extendedPlugins = extendedPlugins
         version = Versions.project
         licenseFile = project.file("LICENSE.txt")
         noticeFile = project.file("NOTICE.txt")
@@ -42,7 +45,7 @@ fun Project.configureOpensearchPlugin(
 
     configure<NamedDomainObjectContainer<OpenSearchCluster>> {
         create("integTest") {
-            setTestDistribution(TestDistribution.INTEG_TEST)
+            setTestDistribution(testDistribution)
             if (numberOfTestClusterNodes != 1) {
                 numberOfNodes = numberOfTestClusterNodes
             }
